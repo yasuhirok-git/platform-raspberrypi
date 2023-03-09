@@ -12,11 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import platform
-
+import os, platform, copy
 from platformio.public import PlatformBase
+from os.path import join
+from platform import system, machine
 
-
+def get_system():
+    sys_dir = system() +'_'+ machine()
+    sys_dir = sys_dir.lower()
+    if 'windows' in sys_dir: 
+        sys_dir = 'windows'
+    return sys_dir 
 class RaspberrypiPlatform(PlatformBase):
 
     def is_embedded(self):
@@ -58,7 +64,7 @@ class RaspberrypiPlatform(PlatformBase):
         if "tools" not in debug:
             debug["tools"] = {}
 
-        for link in ("cmsis-dap", "jlink", "raspberrypi-swd"):
+        for link in ("cmsis-dap", "jlink", "raspberrypi-swd", "picoprobe"):
             if link not in upload_protocols or link in debug["tools"]:
                 continue
 
@@ -81,6 +87,23 @@ class RaspberrypiPlatform(PlatformBase):
                     },
                     "onboard": link in debug.get("onboard_tools", [])
                 }
+            elif link == "picoprobe":
+                openocd_target = debug.get("openocd_target")
+                assert openocd_target, ("Missing target configuration for %s" % board.id)
+                debug["tools"][link] = {
+                    "server": {
+                        "package"    : "tool-pico-openocd",
+                        "executable" : join(get_system(), "picoprobe"), # EXE
+                        "arguments"  : [
+                            "-s", "$PACKAGE_DIR/share/openocd/scripts",
+                            "-f", "interface/%s.cfg" % link,
+                            "-f", "target/%s" % openocd_target
+                        ]
+                    },
+                    "init_cmds"      : [ ],
+                    "onboard"        : link in debug.get("onboard_tools", []),
+                    "default"        : link == debug.get("default_tool"),
+                }
             else:
                 openocd_target = debug.get("openocd_target")
                 assert openocd_target, ("Missing target configuration for %s" % board.id)
@@ -96,6 +119,7 @@ class RaspberrypiPlatform(PlatformBase):
                     }
                 }
 
+        
         board.manifest["debug"] = debug
         return board
 

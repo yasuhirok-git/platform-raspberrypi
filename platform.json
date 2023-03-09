@@ -53,6 +53,15 @@
       "optional": true,
       "owner": "platformio",
       "version": "^1.72000.0"
-    }
+    },
+    "tool-wizio-pico": {
+      "type": "uploader",
+      "version": "https://github.com/Wiz-IO/tool-wizio-pico.git"
+    }, 
+    "tool-pico-openocd": {
+      "optional": true,
+      "type": "debugger",
+      "version": "https://github.com/Wiz-IO/tool-pico-openocd"
+    } 
   }
 }
